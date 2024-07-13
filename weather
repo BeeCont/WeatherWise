@@ -1,6 +1,9 @@
 #!/usr/bin/env python3.10
+from locations.ip_location import IPLocation
+
 def main():
-    print('Hello')
+    location = IPLocation().get_coordinates()
+    print(location)
 
 
 if __name__ == "__main__":
