@@ -27,14 +27,13 @@ WeatherWise/
 ├── README.md
 ├── services
 │   └── weather_api_service.py
-├── testreadme.md
 └── weather
 ```
 
 ## Usage Instructions
 
-1. Install the dependencies listed in `requirements.txt`.
-2. Set up the config file `config/settings.py` using `config/settings_example.yaml` as a template.
-3. Run `main.py` to get the current weather for your location or a given address.
+<!--1. Install the dependencies listed in `requirements.txt`.-->
+1. Set up the config file `config/settings.py` <!--using `config/settings_example.yaml` as a template.-->
+2. Run `weather` to get the current weather for your location or a given address.
 
 This project is made as a learning app to show how to work with APIs and data in Python.
