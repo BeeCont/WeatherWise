@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.10
-from locations.ip_location import IPLocation
+from locations.ip_location import IPLocator
 
 def main():
-    location = IPLocation().get_coordinates()
+    location = IPLocator().get_coordinates()
     print(location)
 
 
