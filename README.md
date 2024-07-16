@@ -17,23 +17,30 @@ This repository has a small Python program to get the current weather. The progr
 ```
 WeatherWise/
 ├── config
-│   └── settings.py
+│   └── settings.py
+├── entities
+│   └── coordinates.py
 ├── exceptions
-│   └── exceptions.py
+│   └── exceptions.py
 ├── formatters
-│   └── weather_formatter.py
+│   └── weather_formatter.py
 ├── locations
-│   └── coordinates.py
+│   ├── base_location.py
+│   └── ip_location.py
 ├── README.md
+├── requirements.txt
 ├── services
-│   └── weather_api_service.py
+│   └── weather_api_service.py
+├── tests
+│   ├── __init__.py
+│   └── locations
 └── weather
 ```
 
 ## Usage Instructions
 
-<!--1. Install the dependencies listed in `requirements.txt`.-->
-1. Set up the config file `config/settings.py` <!--using `config/settings_example.yaml` as a template.-->
-2. Run `weather` to get the current weather for your location or a given address.
+1. Install the dependencies listed in requirements.txt.
+1. Set up the config file config/settings.py <!--using config/settings_example.yaml as a template.-->
+2. Run weather to get the current weather for your location or a given address.
 
 This project is made as a learning app to show how to work with APIs and data in Python.
