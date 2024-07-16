@@ -1,8 +1,9 @@
 #!/usr/bin/env python3.10
 from locations.ip_location import IPLocator
+from config.settings import IP_URL
 
 def main():
-    location = IPLocator().get_coordinates()
+    location = IPLocator(IP_URL).get_coordinates()
     print(location)
 
 
