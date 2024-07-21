@@ -19,7 +19,9 @@ WeatherWise/
 ├── config
 │   └── settings.py
 ├── entities
-│   └── coordinates.py
+│   ├── coordinates.py
+│   └── weather.py
+├── env
 ├── exceptions
 │   └── exceptions.py
 ├── formatters
@@ -30,7 +32,7 @@ WeatherWise/
 ├── README.md
 ├── requirements.txt
 ├── services
-│   └── weather_api_service.py
+│   └── openweather_service.py
 ├── tests
 │   ├── __init__.py
 │   └── locations
@@ -40,7 +42,7 @@ WeatherWise/
 ## Usage Instructions
 
 1. Install the dependencies listed in requirements.txt.
-1. Set up the config file config/settings.py <!--using config/settings_example.yaml as a template.-->
+1. Set up the settings file `env/.env` using `env/.env_example` as a template.
 2. Run weather to get the current weather for your location or a given address.
 
 This project is made as a learning app to show how to work with APIs and data in Python.
