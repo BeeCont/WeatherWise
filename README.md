@@ -16,6 +16,7 @@ This repository has a small Python program to get the current weather. The progr
 ## Repository Structure
 ```
 WeatherWise/
+├── COMMIT_CONVENTIONS.md
 ├── config
 │   └── settings.py
 ├── entities
@@ -45,4 +46,8 @@ WeatherWise/
 1. Set up the settings file `env/.env` using `env/.env_example` as a template.
 2. Run weather to get the current weather for your location or a given address.
 
+## Contributing
+
+This project follows the principles of writing comments described [in this documentation](COMMIT_CONVENTIONS.md ).
+#
 This project is made as a learning app to show how to work with APIs and data in Python.
