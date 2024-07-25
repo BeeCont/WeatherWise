@@ -1,14 +1,18 @@
 #!/usr/bin/env python3.10
 from locations.ip_location import IPLocator
 from services.openweather_service import OpenWeatherService
+from formatters.console_weather_formatter import ConsoleFormatter
 from config.settings import IP_URL
 
 def main():
     location = IPLocator(IP_URL)
-    weather_service = OpenWeatherService(location.get_coordinates())
+    coordinates = location.get_coordinates()
 
-    print(weather_service.get_weather())
+    weather_service = OpenWeatherService(coordinates)
+    weather_data = weather_service.get_weather
 
+    formatter = ConsoleFormatter(weather_data)
+    formatter.print_console_weather()
 
 if __name__ == "__main__":
     main()
