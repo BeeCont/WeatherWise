@@ -25,7 +25,7 @@ WeatherWise/
 ├── exceptions
 │   └── exceptions.py
 ├── formatters
-│   └── weather_formatter.py
+│   └── console_weather_formatter.py
 ├── locations
 │   ├── base_location.py
 │   └── ip_location.py
