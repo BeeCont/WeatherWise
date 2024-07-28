@@ -1,0 +1,28 @@
+{
+    "main": {
+        "temp": 22.8,
+        "feels_like": 21.0,
+        "temp_min": 20.0,
+        "temp_max": 25.0,
+        "humidity": 60
+    },
+    "weather": [
+        {
+            "id": 800,
+            "description": "clear sky"
+        }
+    ],
+    "wind": {
+        "speed": 5.0,
+        "deg": 90
+    },
+    "visibility": 10000,
+    "clouds": {
+        "all": 0
+    },
+    "sys": {
+        "sunrise": 1596242400,
+        "sunset": 1596292800
+    },
+    "name": "New York"
+}

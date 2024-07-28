@@ -1,0 +1,18 @@
+{
+    "main": {
+        "temp": 22.8,
+        "feels_like": 21.0,
+        "temp_min": 20.0
+    },
+    "weather": [
+        {
+            "id": "xyz",
+            "description": "clear sky"
+        }
+    ],
+    "sys": {
+        "sunrise": "invalid_timestamp",
+        "sunset": 1596292800
+    },
+    "name": "New York"
+}
