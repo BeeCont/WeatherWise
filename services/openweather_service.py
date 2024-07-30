@@ -85,7 +85,12 @@ class OpenWeatherService:
             self,
             openweather_dict: dict,
             time: Literal['sunrise', 'sunset']) -> datetime:
-        return datetime.fromtimestamp(openweather_dict['sys'][time])
+        try:
+            sun_time = openweather_dict['sys'][time]
+            return datetime.fromtimestamp(sun_time)
+        
+        except(KeyError, TypeError):
+            raise OpenWeatherServiceError('Error parsing suntime')
 
     def _parse_city(self, openweather_dict: dict) -> str:
         try:
