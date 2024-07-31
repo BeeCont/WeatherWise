@@ -87,7 +87,7 @@ class OpenWeatherService:
         for _id, _weather_type in weather_types.items():
             if weather_type_id.startswith(_id):
                 return _weather_type
-        raise OpenWeatherServiceError
+        raise OpenWeatherServiceError(f'Unregistered weather type ID.')
 
     def _parse_sun_time(
             self,
