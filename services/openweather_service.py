@@ -63,7 +63,7 @@ class OpenWeatherService:
                 sunset=self._parse_sun_time(openweather_dict, 'sunset'),
                 city=self._parse_city(openweather_dict)
             )
-        except (KeyError, ValueError) as e:
+        except (KeyError, ValueError, TypeError) as e:
             raise OpenWeatherServiceError(f'Error parsing weather data: {str(e)}.')
         
     def _parse_temperature(self, openweather_dict: dict) -> float:
