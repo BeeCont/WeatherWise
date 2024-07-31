@@ -132,7 +132,7 @@ def test_invalid_city_type(service, base_successful_response):
     mock_response['name'] = 12345  # Invalid type for city name
     
     with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
-        with pytest.raises(OpenWeatherServiceError, match='Error parsing weather data.'):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing city.'):
             service.get_weather()
 
 def test_incorrect_coordinates():
