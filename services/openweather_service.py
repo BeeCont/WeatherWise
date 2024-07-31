@@ -102,7 +102,8 @@ class OpenWeatherService:
             raise OpenWeatherServiceError(f'Error parsing suntime: {str(e)}.')
 
     def _parse_city(self, openweather_dict: dict) -> str:
-        try:
-            return openweather_dict['name']
-        except KeyError:
+        if type(openweather_dict['name']) != str:
             raise OpenWeatherServiceError(f'Error parsing city.')
+        
+        return openweather_dict['name']
+            
