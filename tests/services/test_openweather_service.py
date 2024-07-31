@@ -1,148 +1,140 @@
 import pytest
 import json
-import os
-import requests
-from unittest.mock import Mock, patch
-from requests.exceptions import RequestException
+from unittest.mock import MagicMock, patch
 from datetime import datetime
+from requests.exceptions import RequestException
 
-from exceptions.exceptions import OpenWeatherServiceError
-from entities.weather import Weather, WeatherType
 from entities.coordinates import Coordinates
+from entities.weather import Weather, WeatherType
+from exceptions.exceptions import OpenWeatherServiceError
 from services.openweather_service import OpenWeatherService
 from config.settings import BASE_DIR
 
 @pytest.fixture
-def service():
-    locator = Coordinates(latitude=40.7128, longitude=-74.0060)
-    return OpenWeatherService(locator=locator)
+def coordinates():
+    return Coordinates(latitude=40.7128, longitude=-74.0060)
 
 @pytest.fixture
-def load_fixture():
+def service(coordinates):
+    return OpenWeatherService(locator=coordinates)
+
+@pytest.fixture
+def base_successful_response():
     def _load_fixture(filename):
         filepath = str(BASE_DIR) + f'/fixtures/{filename}'
         with open(filepath, 'r') as file:
             return json.load(file)
     return _load_fixture
-    
-def test_get_weather_success(service, load_fixture):
 
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = load_fixture('openweather_success_response.json')
+def test_successful_weather_request(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    expected_weather = Weather(
+        temperature=23,
+        weather_type=WeatherType.CLEAR,
+        sunrise=datetime.fromtimestamp(1596242400),
+        sunset=datetime.fromtimestamp(1596292800),
+        city='New York'
+    )
 
-    with patch.object(requests, 'get', return_value=mock_response):
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        result = service.get_weather()
+        assert result == expected_weather
 
-        weather = service.get_weather()
-        
-        
-        assert isinstance(weather, Weather)
-        assert weather.temperature == 23
-        assert weather.weather_type == WeatherType.CLEAR
-        assert weather.city == 'New York'
-        assert weather.sunrise == datetime.fromtimestamp(1596242400)
-        assert weather.sunset == datetime.fromtimestamp(1596292800)
-
-def test_get_weather_error(service, load_fixture):
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = load_fixture('openweather_invalid_data_response.json')
-
-    with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(OpenWeatherServiceError, match=''):
+def test_request_failure(service):
+    with patch('requests.get', side_effect=RequestException):
+        with pytest.raises(OpenWeatherServiceError, match='Error while executing request.'):
             service.get_weather()
 
-def test_get_weather_retries_on_failure(service):
-    with patch.object(requests, 'get', side_effect=OpenWeatherServiceError("Error")):
+def test_invalid_status_code(service):
+    with patch('requests.get', return_value=MagicMock(status_code=404)):
+        with pytest.raises(OpenWeatherServiceError, match='HTTP request error. Status code: 404'):
+            service.get_weather()
+
+def test_invalid_json_response(service):
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(side_effect=ValueError))):
+        with pytest.raises(OpenWeatherServiceError, match='JSON parsing error.'):
+            service.get_weather()
+
+def test_missing_temperature(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    del mock_response['main']['temp']
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing weather data.'):
+            service.get_weather()
+
+def test_invalid_temperature_type(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    mock_response['main']['temp'] = 'invalid'
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing weather data.'):
+            service.get_weather()
+
+def test_invalid_weather_type(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    mock_response['weather'][0]['id'] = 9999
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Unregistered weather type ID.'):
+            service.get_weather()
+
+def test_missing_weather_type(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    del mock_response['weather']
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing weather type.'):
+            service.get_weather()
+
+def test_missing_sunrise(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    del mock_response['sys']['sunrise']
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing suntime.'):
+            service.get_weather()
+
+def test_invalid_sunrise_type(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    mock_response['sys']['sunrise'] = 'invalid'
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing suntime.'):
+            service.get_weather()
+
+def test_missing_sunset(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    del mock_response['sys']['sunset']
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing suntime.'):
+            service.get_weather()
+
+def test_invalid_sunset_type(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    mock_response['sys']['sunset'] = 'invalid'
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing suntime.'):
+            service.get_weather()
+
+def test_missing_city(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    del mock_response['name']
+    
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
         with pytest.raises(OpenWeatherServiceError):
             service.get_weather()
 
-def test_make_request_success(service, load_fixture):
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = load_fixture('openweather_success_response.json')
+def test_invalid_city_type(service, base_successful_response):
+    mock_response = base_successful_response('openweather_success_response.json')
+    mock_response['name'] = 12345  # Invalid type for city name
     
-    with patch.object(requests, 'get', return_value=mock_response):
-        with patch.object(OpenWeatherService, '_check_response', return_value=mock_response.json()):
-            result = service._make_request()
-            expected_result = load_fixture('openweather_success_response.json')
-            assert result == expected_result
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        with pytest.raises(OpenWeatherServiceError, match='Error parsing weather data.'):
+            service.get_weather()
 
-def test_make_request_error(service, load_fixture):
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = load_fixture('openweather_success_response.json')
-
-    with patch.object(OpenWeatherService, '_check_response', return_value=mock_response.json()):
-        with patch.object(requests, 'get', side_effect=RequestException("Request failed")):
-            with pytest.raises(OpenWeatherServiceError, match="Error while executing request"):
-                service._make_request()
-
-def test_check_response_success(service):
-
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {}
-
-    with patch.object(OpenWeatherService, '_parse_json', return_value=mock_response.json()):
-        with patch.object(requests, 'get', return_value=mock_response):
-                result = service._check_response(mock_response)
-                assert result == {}
-
-
-def test_check_response_error(service):
-
-    mock_response = Mock()
-    mock_response.status_code = 500
-    
-    with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(OpenWeatherServiceError, match="HTTP request error"):
-            service._check_response(mock_response)
-
-def test_parse_json_success(service, load_fixture):
-
-    mock_response = Mock()
-    mock_response.json.return_value = load_fixture('openweather_success_response.json')
-    
-    result = service._parse_json(mock_response)
-    assert result == load_fixture('openweather_success_response.json')
-
-def test_parse_json_error(service):
-
-    mock_response = Mock()
-    mock_response.json.side_effect = ValueError("Invalid JSON")
-    
-    with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(OpenWeatherServiceError, match="JSON parsing error"):
-            service._parse_json(mock_response)
-
-def test_parse_weather_type_success(service, load_fixture):
-
-    weather_dict = load_fixture('openweather_success_response.json')
-    weather_type = service._parse_weather_type(weather_dict)
-    assert weather_type == WeatherType.CLEAR
-
-def test_parse_weather_type_error(service, load_fixture):
-
-    weather_dict = load_fixture('openweather_invalid_data_response.json')
-    with pytest.raises(OpenWeatherServiceError):
-        service._parse_weather_type(weather_dict)
-
-def test_parse_sun_time_success(service, load_fixture):
-
-    weather_dict = load_fixture('openweather_success_response.json')
-    sunrise = service._parse_sun_time(weather_dict, 'sunrise')
-    sunset = service._parse_sun_time(weather_dict, 'sunset')
-    
-    assert sunrise == datetime.fromtimestamp(1596242400)
-    assert sunset == datetime.fromtimestamp(1596292800)
-
-def test_parse_sun_time_error(service, load_fixture):
-
-    weather_dict = load_fixture('openweather_invalid_data_response.json')
-    with pytest.raises(OpenWeatherServiceError):
-        sunrise = service._parse_sun_time(weather_dict, 'sunrise')
-        sunset = service._parse_sun_time(weather_dict, 'sunset')
+def test_incorrect_coordinates():
+    with pytest.raises(AttributeError):
+        OpenWeatherService(locator=None).get_weather()
