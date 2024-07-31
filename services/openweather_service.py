@@ -16,23 +16,17 @@ class OpenWeatherService:
     Provides a method to request current weather by coordinates and convert
     the API response into a Weather object.
     """
-    def __init__(self, locator: Coordinates, retries: int = 3, delay: float = 1.0):
-        # Initializing the weather service with coordinates, number of attempts, and delay between attempts.
+    def __init__(self, locator: Coordinates):
+        # Initializing the weather service with coordinates.
         self.locator = locator
-        self.retries = retries
-        self.delay = delay
 
     def get_weather(self) -> Weather:
         # The main method for getting weather data.
-        # Repeats the request in case of failure up to the number of attempts.
-        for attempt in range(self.retries):
-            try:
-                data = self._make_request()
-                return self._parse_openweather_response(data)
-            except OpenWeatherServiceError as e:
-                print(f'Attempt {attempt + 1} failed: {e}.')
-                time.sleep(self.delay)
-        raise OpenWeatherServiceError(f'Failed to get weather after {self.retries} attempts.')
+        try:
+            data = self._make_request()
+            return self._parse_openweather_response(data)
+        except OpenWeatherServiceError as e:
+            raise OpenWeatherServiceError(f'Failed to get weather: {str(e)}')
 
     def _make_request(self) -> dict:
         # Generates a URL and executes an HTTP GET request.
