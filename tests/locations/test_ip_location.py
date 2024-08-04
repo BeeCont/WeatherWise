@@ -23,7 +23,7 @@ def test_get_coordinates_success(ip_locator):
 
 def test_get_coordinates_request_exception(ip_locator):
     with patch.object(requests, 'get', side_effect=RequestException("Network error")):
-        with pytest.raises(IPLocatorError, match="Failed to get coordinates after 3 attempts"):
+        with pytest.raises(IPLocatorError, match="Error while executing request"):
             ip_locator.get_coordinates()
 
 def test_get_coordinates_http_error(ip_locator):
@@ -31,7 +31,7 @@ def test_get_coordinates_http_error(ip_locator):
     mock_response.status_code = 404
 
     with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(IPLocatorError, match="Failed to get coordinates after 3 attempts"):
+        with pytest.raises(IPLocatorError, match="HTTP request error. Status code"):
             ip_locator.get_coordinates()
 
 def test_get_coordinates_json_parsing_error(ip_locator):
@@ -40,7 +40,7 @@ def test_get_coordinates_json_parsing_error(ip_locator):
     mock_response.json.side_effect = ValueError("Invalid JSON")
 
     with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(IPLocatorError, match="Failed to get coordinates after 3 attempts"):
+        with pytest.raises(IPLocatorError, match="JSON parsing error"):
             ip_locator.get_coordinates()
 
 def test_get_coordinates_key_error(ip_locator):
@@ -49,7 +49,7 @@ def test_get_coordinates_key_error(ip_locator):
     mock_response.json.return_value = {'longitude': '56.78'}  # Missing 'lat' key
 
     with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(IPLocatorError, match="Failed to get coordinates after 3 attempts"):
+        with pytest.raises(IPLocatorError, match="Error parsing coordinates"):
             ip_locator.get_coordinates()
 
 def test_get_coordinates_value_error(ip_locator):
@@ -58,5 +58,5 @@ def test_get_coordinates_value_error(ip_locator):
     mock_response.json.return_value = {'lat': 'invalid', 'lon': '56.78'}  # 'lat' is not a float
 
     with patch.object(requests, 'get', return_value=mock_response):
-        with pytest.raises(IPLocatorError, match="Failed to get coordinates after 3 attempts"):
+        with pytest.raises(IPLocatorError, match="Error parsing coordinates"):
             ip_locator.get_coordinates()
