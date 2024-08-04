@@ -7,20 +7,15 @@ from entities.coordinates import Coordinates
 from exceptions.exceptions import IPLocatorError
 
 class IPLocator(BaseLocation):
-    def __init__(self, ip_url: str, retries: int = 3, delay: float = 1.0):
+    def __init__(self, ip_url: str):
         self.ip_url = ip_url
-        self.retries = retries
-        self.delay = delay
 
     def get_coordinates(self) -> Coordinates:
-        for attempt in range(self.retries):
-            try:
-                data = self._make_request()
-                return self._parse_coordinates(data)
-            except IPLocatorError as e:
-                print(f"Attempt {attempt + 1} failed: {e}")
-                time.sleep(self.delay)
-        raise IPLocatorError(f"Failed to get coordinates after {self.retries} attempts")
+        try:
+            data = self._make_request()
+            return self._parse_coordinates(data)
+        except IPLocatorError as e:
+            raise IPLocatorError(f"Failed to get coordinates: {str(e)}")
 
     def _make_request(self) -> dict:
         try:
