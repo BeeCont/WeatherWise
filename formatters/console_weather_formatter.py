@@ -20,9 +20,6 @@ class ConsoleFormatter:
 
         self.print_weather_info(self.weather_data())
 
-        thanks_text = Text("Thank you for using our service!", justify="center")
-        self.console.print(Panel(thanks_text, expand=True, padding=(1, 2)))
-
         self.print_main_menu()
 
         self.handle_menu_selection()
@@ -71,7 +68,7 @@ class ConsoleFormatter:
 
     def print_main_menu(self):
         menu_text = Text(
-            "[1] Change city  [2] Refresh data  [3] Exit",
+            "[1] Refresh data  [2] Exit",
             justify="center"
         )
         self.console.print(Panel(menu_text, expand=True, padding=(1, 2)))
@@ -81,12 +78,10 @@ class ConsoleFormatter:
             choice = input("Select an option: ").strip()
 
             if choice == "1":
-                self.console.print("\n[blue]The city change function is not yet implemented.[/blue]\n")
-            elif choice == "2":
                 self.console.print("\n[blue]Updating data...[/blue]\n")
                 self.print_console_weather()
                 pass
-            elif choice == "3":
+            elif choice == "2":
                 self.console.print("\n[green]Exiting the program...[/green]\n")
                 exit()
             else:
