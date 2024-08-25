@@ -41,30 +41,62 @@ class ConsoleFormatter:
 
         city_name = weather_data.city
         temp = weather_data.temperature
+        feels_like = weather_data.temperature_feels_like
+        temp_min = weather_data.temperature_min
+        temp_max = weather_data.temperature_max
+        pressure = weather_data.pressure
+        wind_speed = weather_data.wind_speed
+        wind_dir = weather_data.wind_dir
+        visibility = weather_data.visibility
+        clouds = weather_data.clouds
+        humidity = weather_data.humidity
         sunrise = weather_data.sunrise
         sunset = weather_data.sunset
-        description = weather_data.weather_type
+        description = weather_data.description
 
+        # Панель для температуры
         temperature_panel = (
-            f"🌡️  Temperature:       {temp}°C\n"
+            f"🌡️  Температура:       {temp}°C\n"
+            f"🌬️  Ощущается как:    {feels_like}°C\n"
+            f"🌡️  Минимальная:      {temp_min}°C\n"
+            f"🌡️  Максимальная:     {temp_max}°C"
         )
 
+        # Панель для ветра
+        wind_panel = (
+            f"💨  Ветер:            {wind_speed} м/с, {wind_dir}\n"
+            f"🌫️  Видимость:        {visibility} км\n"
+            f"☁️  Облачность:       {clouds}%"
+        )
+
+        # Панель для влажности и давления
+        air_conditions_panel = (
+            f"💧  Влажность:        {humidity}%\n"
+            f"🧭  Давление:         {pressure} гПа"
+        )
+
+        # Панель для восхода и заката
         sunrise_sunset_panel = (
-            f"🌅  Sunrise:    {sunrise}\n"
-            f"🌇  Sunset:     {sunset}"
+            f"🌅  Восход солнца:    {sunrise}\n"
+            f"🌇  Закат солнца:     {sunset}"
         )
 
+        # Панель для описания погоды
         description_panel = (
-            f"Weather conditions:    {description}"
+            f"Погодные условия:    {description} 🌞"
         )
 
+        # Общий блок для всех панелей
         main_panel_content = (
-            f"[bold]Temperature:[/bold]\n{temperature_panel}\n\n"
-            f"[bold]Sunrise and sunset:[/bold]\n{sunrise_sunset_panel}\n\n"
-            f"[bold]General conditions:[/bold]\n{description_panel}"
+            f"[bold]Температура:[/bold]\n{temperature_panel}\n\n"
+            f"[bold]Ветер и видимость:[/bold]\n{wind_panel}\n\n"
+            f"[bold]Воздух и давление:[/bold]\n{air_conditions_panel}\n\n"
+            f"[bold]Восход и закат солнца:[/bold]\n{sunrise_sunset_panel}\n\n"
+            f"[bold]Общие условия:[/bold]\n{description_panel}"
         )
 
-        self.console.print(Panel(main_panel_content, title=f"Weather for the city of {city_name}", title_align="center", padding=(1, 2)))
+        # Вывод главного блока
+        self.console.print(Panel(main_panel_content, title=f"Погода для города {city_name}", title_align="center", padding=(1, 2)))
 
     def print_main_menu(self):
         menu_text = Text(

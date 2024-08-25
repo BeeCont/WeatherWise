@@ -57,8 +57,18 @@ class OpenWeatherService:
         # Converts the OpenWeather response dictionary to a Weather object.
         try:
             return Weather(
-                temperature=self._parse_temperature(openweather_dict),
+                temperature=self._parse_temperature(openweather_dict, 'temp'),
+                temperature_feels_like=self._parse_temperature(openweather_dict, 'feels_like'),
+                temperature_min=self._parse_temperature(openweather_dict, 'temp_min'),
+                temperature_max=self._parse_temperature(openweather_dict, 'temp_max'),
+                pressure=self._parse_pressure(openweather_dict),
                 weather_type=self._parse_weather_type(openweather_dict),
+                wind_speed=self._parse_wind_speed(openweather_dict),
+                wind_dir=self._parse_wind_dir(openweather_dict),
+                visibility=self._parse_visibility(openweather_dict),
+                clouds=self._parse_clouds(openweather_dict),
+                humidity=self._parse_humidity(openweather_dict),
+                description=self._parse_description(openweather_dict),
                 sunrise=self._parse_sun_time(openweather_dict, 'sunrise'),
                 sunset=self._parse_sun_time(openweather_dict, 'sunset'),
                 city=self._parse_city(openweather_dict)
@@ -66,8 +76,34 @@ class OpenWeatherService:
         except (KeyError, ValueError, TypeError) as e:
             raise OpenWeatherServiceError(f'Error parsing weather data: {str(e)}.')
         
-    def _parse_temperature(self, openweather_dict: dict) -> float:
-        return round(openweather_dict['main']['temp'])
+    def _parse_temperature(self, openweather_dict: dict, field: str) -> float:
+        return round(openweather_dict['main'][field])
+    
+    def _parse_pressure(self, openweather_dict: dict) -> int:
+        return openweather_dict['main']['pressure']
+    
+    def _parse_wind_speed(self, openweather_dict: dict) -> float:
+        return openweather_dict['wind']['speed']
+    
+    def _parse_wind_dir(self, openweather_dict: dict) -> str:
+        deg = openweather_dict['wind']['deg']
+        directions = [
+            'North', 'North-East', 'East', 'South-East',
+            'South', 'South-West', 'West', 'North-West'
+        ]
+        return directions[round(deg / 45) % 8]
+    
+    def _parse_visibility(self, openweather_dict: dict) -> float:
+        return openweather_dict['visibility'] / 1000
+    
+    def _parse_clouds(self, openweather_dict: dict) -> int:
+        return openweather_dict['clouds']['all']
+    
+    def _parse_humidity(self, openweather_dict: dict) -> int:
+        return openweather_dict['main']['humidity']
+    
+    def _parse_description(self, openweather_dict: dict) -> str:
+        return openweather_dict['weather'][0]['description']
     
     def _parse_weather_type(self, openweather_dict: dict) -> WeatherType:
         # Find out the weather type by its ID and give back the right Weather Type.

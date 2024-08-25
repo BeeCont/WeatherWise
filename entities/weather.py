@@ -16,7 +16,17 @@ class WeatherType(str, Enum):
 @dataclass(slots=True, frozen=True)
 class Weather:
     temperature: float
+    temperature_feels_like: float
+    temperature_min: float
+    temperature_max: float
+    pressure: int
     weather_type: WeatherType
+    wind_speed: float
+    wind_dir: str
+    visibility: float
+    clouds: int
+    humidity: int
+    description: str
     sunrise: datetime
     sunset: datetime
     city: str
