@@ -1,11 +1,13 @@
-import requests
-import time
-from requests.exceptions import RequestException
-from typing import Literal
 from datetime import datetime
+from typing import Literal
+
+import requests
+from requests.exceptions import RequestException
+from pydantic import ValidationError
 
 from entities.coordinates import Coordinates
-from entities.weather import Weather, WeatherType
+from entities.schemas.open_weather_schema import OpenWeatherSchema
+from entities.dto.weather_dto import WeatherDTO
 from exceptions.exceptions import OpenWeatherServiceError
 from config.settings import OPENWEATHER_URL_TEMPLATE
 
@@ -14,13 +16,13 @@ class OpenWeatherService:
     Service to get weather data from OpenWeather API.
 
     Provides a method to request current weather by coordinates and convert
-    the API response into a Weather object.
+    the API response into a WeatherDTO object.
     """
     def __init__(self, locator: Coordinates):
-        # Initializing the weather service with coordinates.
+        #Initializing the weather service with coordinates.
         self.locator = locator
 
-    def get_weather(self) -> Weather:
+    def get_weather(self) -> WeatherDTO:
         # The main method for getting weather data.
         try:
             data = self._make_request()
@@ -53,93 +55,68 @@ class OpenWeatherService:
         except ValueError as e:
             raise OpenWeatherServiceError(f'JSON parsing error: {str(e)}.')
         
-    def _parse_openweather_response(self, openweather_dict: dict) -> Weather:
+    def _parse_openweather_response(self, openweather_dict: dict) -> WeatherDTO:
         # Converts the OpenWeather response dictionary to a Weather object.
         try:
-            return Weather(
-                temperature=self._parse_temperature(openweather_dict, 'temp'),
-                temperature_feels_like=self._parse_temperature(openweather_dict, 'feels_like'),
-                temperature_min=self._parse_temperature(openweather_dict, 'temp_min'),
-                temperature_max=self._parse_temperature(openweather_dict, 'temp_max'),
-                pressure=self._parse_pressure(openweather_dict),
-                weather_type=self._parse_weather_type(openweather_dict),
-                wind_speed=self._parse_wind_speed(openweather_dict),
-                wind_dir=self._parse_wind_dir(openweather_dict),
-                visibility=self._parse_visibility(openweather_dict),
-                clouds=self._parse_clouds(openweather_dict),
-                humidity=self._parse_humidity(openweather_dict),
-                description=self._parse_description(openweather_dict),
-                sunrise=self._parse_sun_time(openweather_dict, 'sunrise'),
-                sunset=self._parse_sun_time(openweather_dict, 'sunset'),
-                city=self._parse_city(openweather_dict)
+            weather_data = OpenWeatherSchema(**openweather_dict)
+            return WeatherDTO(
+                temp=self._parse_temperature(weather_data, 'temp'),
+                feels_like=self._parse_temperature(weather_data, 'feels_like'),
+                temp_min=self._parse_temperature(weather_data, 'temp_min'),
+                temp_max=self._parse_temperature(weather_data, 'temp_max'),
+                pressure=self._parse_pressure(weather_data),
+                wind_speed=self._parse_wind_speed(weather_data),
+                wind_dir=self._parse_wind_dir(weather_data),
+                visibility_km=self._parse_visibility(weather_data),
+                clouds=self._parse_clouds(weather_data),
+                humidity=self._parse_humidity(weather_data),
+                description=self._parse_description(weather_data),
+                sunrise=self._parse_sun_time(weather_data, 'sunrise'),
+                sunset=self._parse_sun_time(weather_data, 'sunset'),
+                city_name=self._parse_city(weather_data)
             )
-        except (KeyError, ValueError, TypeError) as e:
+        except ValidationError as e:
             raise OpenWeatherServiceError(f'Error parsing weather data: {str(e)}.')
         
-    def _parse_temperature(self, openweather_dict: dict, field: str) -> float:
-        return round(openweather_dict['main'][field])
+    def _parse_temperature(
+            self, 
+            weather_data: OpenWeatherSchema, 
+            temp: Literal['temp', 'feels_like', 'temp_min', 'temp_max'] 
+        ) -> float:
+        return round(getattr(weather_data.main, temp))
     
-    def _parse_pressure(self, openweather_dict: dict) -> int:
-        return openweather_dict['main']['pressure']
+    def _parse_pressure(self, weather_data: OpenWeatherSchema) -> int:
+        return weather_data.main.pressure
     
-    def _parse_wind_speed(self, openweather_dict: dict) -> float:
-        return openweather_dict['wind']['speed']
+    def _parse_wind_speed(self, weather_data: OpenWeatherSchema) -> float:
+        return weather_data.wind.speed
     
-    def _parse_wind_dir(self, openweather_dict: dict) -> str:
-        deg = openweather_dict['wind']['deg']
+    def _parse_wind_dir(self, weather_data: OpenWeatherSchema) -> str:
+        deg = weather_data.wind.deg
         directions = [
             'North', 'North-East', 'East', 'South-East',
             'South', 'South-West', 'West', 'North-West'
         ]
-        return directions[round(deg / 45) % 8]
+        return directions[(deg // 45) % 8]
     
-    def _parse_visibility(self, openweather_dict: dict) -> float:
-        return openweather_dict['visibility'] / 1000
+    def _parse_visibility(self, weather_data: OpenWeatherSchema) -> float:
+        return weather_data.visibility / 1000
     
-    def _parse_clouds(self, openweather_dict: dict) -> int:
-        return openweather_dict['clouds']['all']
+    def _parse_clouds(self, weather_data: OpenWeatherSchema) -> int:
+        return weather_data.clouds.all
     
-    def _parse_humidity(self, openweather_dict: dict) -> int:
-        return openweather_dict['main']['humidity']
+    def _parse_humidity(self, weather_data: OpenWeatherSchema) -> int:
+        return weather_data.main.humidity
     
-    def _parse_description(self, openweather_dict: dict) -> str:
-        return openweather_dict['weather'][0]['description']
+    def _parse_description(self, weather_data: OpenWeatherSchema) -> str:
+        return weather_data.weather[0].description
     
-    def _parse_weather_type(self, openweather_dict: dict) -> WeatherType:
-        # Find out the weather type by its ID and give back the right Weather Type.
-        try:
-            weather_type_id = str(openweather_dict['weather'][0]['id'])
-        except (IndexError, KeyError) as e:
-            raise OpenWeatherServiceError(f'Error parsing weather type: {str(e)}.')
-        weather_types = {
-            '1': WeatherType.THUNDERSTORM,
-            '3': WeatherType.DRIZZLE,
-            '5': WeatherType.RAIN,
-            '6': WeatherType.SNOW,
-            '7': WeatherType.FOG,
-            '800': WeatherType.CLEAR,
-            '80': WeatherType.CLOUDS
-        }
-        for _id, _weather_type in weather_types.items():
-            if weather_type_id.startswith(_id):
-                return _weather_type
-        raise OpenWeatherServiceError(f'Unregistered weather type ID.')
-
     def _parse_sun_time(
             self,
-            openweather_dict: dict,
+            weather_data: OpenWeatherSchema,
             time: Literal['sunrise', 'sunset']) -> datetime:
         # Turns the sunrise or sunset time from a timestamp.
-        try:
-            sun_time = openweather_dict['sys'][time]
-            return datetime.fromtimestamp(sun_time)
-        
-        except(KeyError, TypeError) as e:
-            raise OpenWeatherServiceError(f'Error parsing suntime: {str(e)}.')
+        return datetime.fromtimestamp(getattr(weather_data.sys, time))
 
-    def _parse_city(self, openweather_dict: dict) -> str:
-        if type(openweather_dict['name']) != str:
-            raise OpenWeatherServiceError(f'Error parsing city.')
-        
-        return openweather_dict['name']
-            
+    def _parse_city(self, weather_data: OpenWeatherSchema) -> str:
+        return weather_data.name
