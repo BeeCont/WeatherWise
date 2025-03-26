@@ -31,6 +31,19 @@ class WeatherCondition(BaseModel):
 
 
 class OpenWeatherSchema(BaseModel):
+    """Schema for validating weather data from the OpenWeather API.
+
+    This schema ensures that the API response contains the required fields
+    with valid data types and constraints. It helps prevent errors due to
+    missing or incorrect data when parsing the response.
+
+    Usage:
+
+        response = fetch_weather()  # Function that fetches API data
+        validated_data = OpenWeatherSchema(**response)
+
+    The model is designed for API response validation and integration with weather-service.
+    """
     main: MainWeatherData
     weather: List[WeatherCondition]
     wind: WindData

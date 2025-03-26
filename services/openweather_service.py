@@ -12,18 +12,44 @@ from exceptions.exceptions import OpenWeatherServiceError
 from config.settings import OPENWEATHER_URL_TEMPLATE
 
 class OpenWeatherService:
-    """
-    Service to get weather data from OpenWeather API.
+    """Service to get weather data from OpenWeather API.
 
-    Provides a method to request current weather by coordinates and convert
-    the API response into a WeatherDTO object.
+    This service provides an interface to query the current weather information
+    by geographical coordinates (latitude and longitude) and converts the 
+    API response into a structured `WeatherDTO` object that is easier to work with in
+    the application.
+
+    Usage:
+
+        locator = Coordinates(latitude=51.5074, longitude=-0.1278)  # Coordinates for London
+        weather_service = OpenWeatherService(locator)
+        weather_data = weather_service.get_weather()
+
+    The `WeatherDTO` object returned provides all the weather details in a 
+    structured and easy-to-access format. 
     """
     def __init__(self, locator: Coordinates):
-        #Initializing the weather service with coordinates.
+        """Initializing the weather service with coordinates.
+
+        Args:
+            locator (Coordinates): An instance of `Coordinates` that contains 
+            the geographical coordinates (latitude and longitude) of the location.
+        """
         self.locator = locator
 
     def get_weather(self) -> WeatherDTO:
-        # The main method for getting weather data.
+        """Fetches the current weather data for the given coordinates.
+
+        This method sends a request to the OpenWeather API, retrieves weather data,
+        and converts it into a structure `WeatherDTO` object.
+
+        Raises:
+            OpenWeatherServiceError: If there is an issue with the request or response parsing.
+
+        Returns:
+            WeatherDTO: An object containing validated weather details such as temperature,
+            wind speed, humidity, pressure, visibility, cloudiness, and other weather details.
+        """
         try:
             data = self._make_request()
             return self._parse_openweather_response(data)
@@ -31,7 +57,17 @@ class OpenWeatherService:
             raise OpenWeatherServiceError(f'Failed to get weather: {str(e)}')
 
     def _make_request(self) -> dict:
-        # Generates a URL and executes an HTTP GET request.
+        """Generates a URL and executes an HTTP GET request.
+
+        This method constructs a URL using the coordinates of the location and performs a GET request 
+        to the OpenWeather API to retrieve the weather information
+
+        Raises:
+            OpenWeatherServiceError: If there is an issue with request.
+
+        Returns:
+            dict: The JSON response from the API.
+        """
         try:
             url = OPENWEATHER_URL_TEMPLATE.format(
                 latitude=self.locator.latitude, 
@@ -42,21 +78,58 @@ class OpenWeatherService:
             raise OpenWeatherServiceError(f'Error while executing request: {str(e)}. Check your internet connection.')
 
     def _check_response(self, response: requests.Response) -> dict:
-        # Checks the status of the response code and returns JSON if the status is 200.
+        """Checks the status code of the response and return JSON if successful.
+
+        Args:
+            response (requests.Response): The HTTP response object from the API request.
+
+        Raises:
+            OpenWeatherServiceError: If the response status is not 200.
+
+        Returns:
+            dict: Parsed JSON data.
+        """
         if response.status_code != 200:
             print(response.status_code)
             raise OpenWeatherServiceError(f'HTTP request error. Status code: {response.status_code}.')
         return self._parse_json(response)
 
     def _parse_json(self, response: requests.Response) -> dict:
-        # Tries to convert the response to JSON format.
+        """Attempts to parse the API response into a JSON object.
+
+        This method tries to convert the response body from the OpenWeather API into a JSON format.
+
+        Args:
+            response (requests.Response): The HTTP response object from the API request.
+
+        Raises:
+            OpenWeatherServiceError: If the response cannot be parsed into JSON.
+
+        Returns:
+            dict: The parsed JSON data from the API response.
+        """
         try:
             return response.json()
         except ValueError as e:
             raise OpenWeatherServiceError(f'JSON parsing error: {str(e)}.')
         
     def _parse_openweather_response(self, openweather_dict: dict) -> WeatherDTO:
-        # Converts the OpenWeather response dictionary to a Weather object.
+        """Converts the OpenWeather API into a structured WeatherDTO object.
+
+        This method takes the raw response data from the OpenWeather API (in dictionary format),
+        parse it, and returns a `WeatherDTO` object containing all the relevant weather information
+        in a structured and accessible format.
+
+        Args:
+            openweather_dict (dict): The raw response data from the OpenWeather API in dictionary format.
+
+        Raises:
+            OpenWeatherServiceError: If there is an error during the parsing or mapping the response data.
+
+        Returns:
+            WeatherDTO: An object containing validated weather details such as temperature,
+            wind speed, humidity, pressure, visibility, cloudiness, and other weather details.
+        """
         try:
             weather_data = OpenWeatherSchema(**openweather_dict)
             return WeatherDTO(
@@ -83,6 +156,7 @@ class OpenWeatherService:
             weather_data: OpenWeatherSchema, 
             temp: Literal['temp', 'feels_like', 'temp_min', 'temp_max'] 
         ) -> float:
+        # Extracts and rounds temperature values.
         return round(getattr(weather_data.main, temp))
     
     def _parse_pressure(self, weather_data: OpenWeatherSchema) -> int:
@@ -92,6 +166,7 @@ class OpenWeatherService:
         return weather_data.wind.speed
     
     def _parse_wind_dir(self, weather_data: OpenWeatherSchema) -> str:
+        # Converts wind direction from degrees to a copmass direction.
         deg = weather_data.wind.deg
         directions = [
             'North', 'North-East', 'East', 'South-East',
@@ -100,6 +175,7 @@ class OpenWeatherService:
         return directions[(deg // 45) % 8]
     
     def _parse_visibility(self, weather_data: OpenWeatherSchema) -> float:
+        # Converts visibility from meters to kilometers.
         return weather_data.visibility / 1000
     
     def _parse_clouds(self, weather_data: OpenWeatherSchema) -> int:
@@ -115,7 +191,7 @@ class OpenWeatherService:
             self,
             weather_data: OpenWeatherSchema,
             time: Literal['sunrise', 'sunset']) -> datetime:
-        # Turns the sunrise or sunset time from a timestamp.
+        # Converts sunrise or sunset time from a UNIX timestamp to a datetime object.
         return datetime.fromtimestamp(getattr(weather_data.sys, time))
 
     def _parse_city(self, weather_data: OpenWeatherSchema) -> str:
