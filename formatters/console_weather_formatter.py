@@ -3,12 +3,11 @@ import platform
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from datetime import datetime
 
-from entities.weather import Weather
+from entities.dto.weather_dto import WeatherDTO
 
 class ConsoleFormatter:
-    def __init__(self, weather_data: Weather):
+    def __init__(self, weather_data: WeatherDTO):
         self.console = Console()
         self.weather_data = weather_data
 
@@ -35,19 +34,19 @@ class ConsoleFormatter:
         welcome_text = Text("Welcome! 😊", justify="center")
         self.console.print(Panel(welcome_text, expand=True, padding=(1, 2)))
 
-    def print_weather_info(self, weather_data: Weather):
+    def print_weather_info(self, weather_data: WeatherDTO):
         self.clear_console()
         self.print_header()
 
-        city_name = weather_data.city
-        temp = weather_data.temperature
-        feels_like = weather_data.temperature_feels_like
-        temp_min = weather_data.temperature_min
-        temp_max = weather_data.temperature_max
+        city_name = weather_data.city_name
+        temp = weather_data.temp
+        feels_like = weather_data.feels_like
+        temp_min = weather_data.temp_min
+        temp_max = weather_data.temp_max
         pressure = weather_data.pressure
         wind_speed = weather_data.wind_speed
         wind_dir = weather_data.wind_dir
-        visibility = weather_data.visibility
+        visibility = weather_data.visibility_km
         clouds = weather_data.clouds
         humidity = weather_data.humidity
         sunrise = weather_data.sunrise
