@@ -44,6 +44,26 @@ integration ensures data accuracy and consistency.
 - Wrap lines at 72 characters for better readability.
 - Explain "why" behind changes, not just "what" was changed.
 
+
+### 3. Quoting Technical Terms
+
+**Format:** Use backticks (`) in the body of the commit message for technical terms like class names, method names, file names, or CLI flags.
+
+**Examples:**
+```
+* Added `UserService` class to handle user authentication.
+* Updated `fetchProfileData` method to fix null pointer issue.
+* Modified `config.json` to include new API endpoints.
+* Introduced `--force` flag in the deploy script.
+```
+
+**Requirements:**
+
+- Use backticks in the **body** to improve readability of technical terms.
+- Avoid using backticks in the header unless it is necessary (e.g., CLI flags like `--force`).
+- For functions, always include parentheses: `http_json_request()`.
+- Keep the use of backticks concise and only for actual code, classes, functions, files, or flags.
+
 ## Types of Commit Messages
 
 Use the following types for commit messages:
