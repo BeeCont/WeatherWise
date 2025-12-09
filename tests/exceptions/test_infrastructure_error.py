@@ -107,12 +107,14 @@ def test_infrastructure_error_format_message_without_http_status():
     This test verifies that the string representation of the error correctly
     formats the message to include the default http_status when none is provided.
     """
+    default_http_status = 500 # Default defined in InfrastructureError
+
     # Case 1: details is None
     err_none = InfrastructureError(message="Error with no http_status", http_status=None)
     output_none = err_none.format_message()
-    assert " | http_status =" in output_none
+    assert f" | http_status={default_http_status}" in output_none
 
     # Case 2: details is an empty dictionary
     err_empty = InfrastructureError(message="Error with empty http_status", details={})
     output_empty = err_empty.format_message()
-    assert " | http_status =" in output_empty
+    assert f" | http_status={default_http_status}" in output_empty
