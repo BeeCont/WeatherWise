@@ -1,4 +1,4 @@
-from .base_exceptions import AppError, ErrorLayer, ErrorSeverity
+from .base_exception import AppError, ErrorLayer, ErrorSeverity
 
 
 class InfrastructureError(AppError):

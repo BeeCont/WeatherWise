@@ -18,7 +18,7 @@ from datetime import datetime
 import pytest
 from freezegun import freeze_time
 
-from exceptions.base_exceptions import AppError, ErrorSeverity, ErrorLayer
+from exceptions.base_exception import AppError, ErrorSeverity, ErrorLayer
 
 
 @freeze_time("2025-01-01 12:00:00")

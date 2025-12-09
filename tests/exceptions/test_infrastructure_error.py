@@ -20,7 +20,7 @@ from datetime import datetime
 import pytest
 from freezegun import freeze_time
 
-from exceptions.base_exceptions import ErrorSeverity, ErrorLayer
+from exceptions.base_exception import ErrorSeverity, ErrorLayer
 from exceptions.infrastructure_exceptions import InfrastructureError
 
 
