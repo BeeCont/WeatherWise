@@ -8,7 +8,7 @@ from requests.exceptions import RequestException
 
 from entities.coordinates import Coordinates
 from entities.dto.weather_dto import WeatherDTO
-from exceptions.exceptions import OpenWeatherServiceError
+from exceptions.weather_service_exceptions import OpenWeatherServiceError
 from exceptions.infrastructure_exceptions import HttpRequestError, JsonParseError, InfrastructureError
 from exceptions.domain_exceptions import InvalidWeatherDataError
 from services.openweather_service import OpenWeatherService
