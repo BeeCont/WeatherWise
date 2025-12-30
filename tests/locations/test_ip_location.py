@@ -46,6 +46,7 @@ def ip_locator() -> IPLocator:
     """
     return IPLocator(ip_url="http://example.com")
 
+EXPECTED_LOCATOR_ERROR = "Failed to get coordinates from IP location service."
 
 def test_successful_get_coordinates(ip_locator: IPLocator) -> None:
     """
@@ -73,10 +74,10 @@ def test_request_exception(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
 
-        assert exc_info.value.message == "Failed to get coordinates from IPLocator service."
+        assert exc_info.value.message == EXPECTED_LOCATOR_ERROR
         cause = exc_info.value.__cause__
         assert isinstance(cause, InfrastructureError)
-        assert "Error during IPLocator API request." in cause.message
+        assert "Error during IP location request." in cause.message
 
 
 def test_http_error_status_code(ip_locator: IPLocator) -> None:
@@ -89,7 +90,7 @@ def test_http_error_status_code(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
 
-        assert exc_info.value.message == "Failed to get coordinates from IPLocator service."
+        assert exc_info.value.message == EXPECTED_LOCATOR_ERROR
         infra_cause = exc_info.value.__cause__
         assert isinstance(infra_cause, InfrastructureError)
         http_cause = infra_cause.__cause__
@@ -110,7 +111,7 @@ def test_json_parsing_error(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
 
-        assert exc_info.value.message == "Failed to get coordinates from IPLocator service."
+        assert exc_info.value.message == EXPECTED_LOCATOR_ERROR
         infra_cause = exc_info.value.__cause__
         assert isinstance(infra_cause, InfrastructureError)
         json_cause = infra_cause.__cause__
@@ -132,9 +133,9 @@ def test_missing_latitude_key(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
 
-        assert "Error parsing coordinates" in exc_info.value.message
         pars_cause = exc_info.value.__cause__
         assert isinstance(pars_cause, InvalidCoordinatesError)
+        assert "Error parsing coordinates" in pars_cause.message
 
 
 def test_missing_longitude_key(ip_locator: IPLocator) -> None:
@@ -152,9 +153,9 @@ def test_missing_longitude_key(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
         
-        assert "Error parsing coordinates" in exc_info.value.message
         pars_cause = exc_info.value.__cause__
         assert isinstance(pars_cause, InvalidCoordinatesError)
+        assert "Error parsing coordinates" in pars_cause.message
 
 
 def test_invalid_latitude_value(ip_locator: IPLocator) -> None:
@@ -172,9 +173,9 @@ def test_invalid_latitude_value(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
 
-        assert "Error parsing coordinates" in exc_info.value.message
         pars_cause = exc_info.value.__cause__
         assert isinstance(pars_cause, InvalidCoordinatesError)
+        assert "Error parsing coordinates" in pars_cause.message
 
 
 def test_invalid_longitude_value(ip_locator: IPLocator) -> None:
@@ -192,6 +193,6 @@ def test_invalid_longitude_value(ip_locator: IPLocator) -> None:
         with pytest.raises(IPLocatorError) as exc_info:
             ip_locator.get_coordinates()
         
-        assert "Error parsing coordinates" in exc_info.value.message
         pars_cause = exc_info.value.__cause__
         assert isinstance(pars_cause, InvalidCoordinatesError)
+        assert "Error parsing coordinates" in pars_cause.message
