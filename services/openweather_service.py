@@ -8,7 +8,9 @@ from pydantic import ValidationError
 from entities.coordinates import Coordinates
 from entities.schemas.open_weather_schema import OpenWeatherSchema
 from entities.dto.weather_dto import WeatherDTO
-from exceptions.exceptions import OpenWeatherServiceError
+from exceptions.weather_service_exceptions import OpenWeatherServiceError
+from exceptions.infrastructure_exceptions import InfrastructureError, JsonParseError, HttpRequestError
+from exceptions.domain_exceptions import DomainError, InvalidWeatherDataError
 from config.settings import OPENWEATHER_URL_TEMPLATE
 
 class OpenWeatherService:
@@ -53,8 +55,8 @@ class OpenWeatherService:
         try:
             data = self._make_request()
             return self._parse_openweather_response(data)
-        except OpenWeatherServiceError as e:
-            raise OpenWeatherServiceError(f'Failed to get weather: {str(e)}')
+        except (InfrastructureError, DomainError) as e:
+            raise OpenWeatherServiceError(message="Failed to get weather data from OpenWeather service.") from e
 
     def _make_request(self) -> dict:
         """Generates a URL and executes an HTTP GET request.
@@ -63,7 +65,7 @@ class OpenWeatherService:
         to the OpenWeather API to retrieve the weather information
 
         Raises:
-            OpenWeatherServiceError: If there is an issue with request.
+            InfrastructureError: If there is an issue with request.
 
         Returns:
             dict: The JSON response from the API.
@@ -74,8 +76,8 @@ class OpenWeatherService:
                 longitude=self.locator.longitude
             )
             return self._check_response(requests.get(url))
-        except RequestException as e:
-            raise OpenWeatherServiceError(f'Error while executing request: {str(e)}. Check your internet connection.')
+        except (RequestException, HttpRequestError, JsonParseError) as e:
+            raise InfrastructureError(message="Error during OpenWeather API request.") from e
 
     def _check_response(self, response: requests.Response) -> dict:
         """Checks the status code of the response and return JSON if successful.
@@ -84,14 +86,17 @@ class OpenWeatherService:
             response (requests.Response): The HTTP response object from the API request.
 
         Raises:
-            OpenWeatherServiceError: If the response status is not 200.
+            HttpRequestError: If the response status is not 200.
 
         Returns:
             dict: Parsed JSON data.
         """
         if response.status_code != 200:
-            print(response.status_code)
-            raise OpenWeatherServiceError(f'HTTP request error. Status code: {response.status_code}.')
+            raise HttpRequestError(
+                message="Failed to retrieve valid data from the OpenWeather API.",
+                http_status=response.status_code
+            )
+        
         return self._parse_json(response)
 
     def _parse_json(self, response: requests.Response) -> dict:
@@ -103,7 +108,7 @@ class OpenWeatherService:
             response (requests.Response): The HTTP response object from the API request.
 
         Raises:
-            OpenWeatherServiceError: If the response cannot be parsed into JSON.
+            JsonParseError: If the response cannot be parsed into JSON.
 
         Returns:
             dict: The parsed JSON data from the API response.
@@ -111,7 +116,13 @@ class OpenWeatherService:
         try:
             return response.json()
         except ValueError as e:
-            raise OpenWeatherServiceError(f'JSON parsing error: {str(e)}.')
+            preview = response.text[:100]  # Get first 100 characters for context
+
+            raise JsonParseError(
+                message="Failed to parse JSON response from OpenWeather API.",
+                http_status=response.status_code,
+                details={"response_preview": preview}
+            ) from e
         
     def _parse_openweather_response(self, openweather_dict: dict) -> WeatherDTO:
         """Converts the OpenWeather API into a structured WeatherDTO object.
@@ -149,7 +160,7 @@ class OpenWeatherService:
                 city_name=self._parse_city(weather_data)
             )
         except ValidationError as e:
-            raise OpenWeatherServiceError(f'Error parsing weather data: {str(e)}.')
+            raise InvalidWeatherDataError(f'Error parsing weather data: {str(e)}.')
         
     def _parse_temperature(
             self, 
