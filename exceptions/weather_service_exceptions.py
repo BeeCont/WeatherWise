@@ -1,5 +1,4 @@
 from .infrastructure_exceptions import InfrastructureError
-from .base_exception import ErrorLayer
 
 
 class WeatherServiceError(InfrastructureError):
