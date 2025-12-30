@@ -25,3 +25,16 @@ class InvalidWeatherDataError(DomainError):
     """
     default_code = ErrorLayer.VALIDATION_ERROR
     default_message = "Invalid weather data received (does not meet business rules)."
+
+class InvalidCoordinatesError(DomainError):
+    """Raised when coordinates are invalid according to domain rules.
+
+    This exception is used when latitude or longitude values are outside
+    acceptable ranges or formats.
+
+    Example:
+        if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+            raise InvalidCoordinatesError(invalid_values={'lat': latitude, 'lon': longitude})
+    """
+    default_code = ErrorLayer.VALIDATION_ERROR
+    default_message = "Invalid coordinates received."
