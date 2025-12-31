@@ -77,7 +77,7 @@ def test_request_exception(ip_locator: IPLocator) -> None:
         assert exc_info.value.message == EXPECTED_LOCATOR_ERROR
         cause = exc_info.value.__cause__
         assert isinstance(cause, InfrastructureError)
-        assert "Error during IP location request." in cause.message
+        assert "Error during HTTP API request." in cause.message
 
 
 def test_http_error_status_code(ip_locator: IPLocator) -> None:
