@@ -179,7 +179,7 @@ def test_request_failure(service: OpenWeatherService) -> None:
         assert exc_info.value.message == "Failed to get weather data from OpenWeather service."
         cause = exc_info.value.__cause__
         assert isinstance(cause, InfrastructureError)
-        assert "Error during OpenWeather API request." in cause.message
+        assert "Error during HTTP API request." in cause.message
 
 def test_invalid_status_code(service: OpenWeatherService) -> None:
     """Test for invalid HTTP status code (non-200).
