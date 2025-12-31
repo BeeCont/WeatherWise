@@ -5,12 +5,13 @@ from .base_location import BaseLocation
 from entities.coordinates import Coordinates
 from exceptions.locator_exceptions import IPLocatorError
 from exceptions.domain_exceptions import DomainError, InvalidCoordinatesError
+from mixins.http_json_mixin import HttpJsonMixin
 from exceptions.infrastructure_exceptions import (
     InfrastructureError, HttpRequestError, JsonParseError
 )
 
 
-class IPLocator(BaseLocation):
+class IPLocator(BaseLocation, HttpJsonMixin):
     """
     Service class for retrieving geographical coordinates based on an IP address.
 
@@ -49,72 +50,11 @@ class IPLocator(BaseLocation):
             IPLocatorError: If any error occurs during request, parsing, or validation.
         """
         try:
-            data = self._make_request()
+            data = self._make_http_request(self.ip_url)
             return self._parse_coordinates(data)
         except (InfrastructureError, DomainError) as e:
             raise IPLocatorError(
                 message="Failed to get coordinates from IP location service."
-            ) from e
-
-    def _make_request(self) -> dict:
-        """
-        Send the HTTP request to the IP location service and check the response.
-
-        Raises:
-            InfrastructureError: Wraps network-level or response-related issues.
-        
-        Returns:
-            dict: Parsed JSON response from the service.
-        """
-        try:
-            response = requests.get(self.ip_url)
-            return self._check_response(response)
-        except (RequestException, HttpRequestError, JsonParseError) as e:
-            raise InfrastructureError(
-                message="Error during IP location request."
-            ) from e
-
-    def _check_response(self, response: requests.Response) -> dict:
-        """
-        Validate HTTP response status and parse JSON content.
-
-        Args:
-            response (requests.Response): HTTP response object.
-
-        Raises:
-            HttpRequestError: If HTTP status code is not 200.
-
-        Returns:
-            dict: Parsed JSON response.
-        """
-        if response.status_code != 200:
-            raise HttpRequestError(
-                message="Failed to retrieve valid data from the IP location service.",
-                http_status=response.status_code
-            )
-        return self._parse_json(response)
-
-    def _parse_json(self, response: requests.Response) -> dict:
-        """
-        Parse the HTTP response body as JSON.
-
-        Args:
-            response (requests.Response): HTTP response object.
-
-        Raises:
-            JsonParseError: If response cannot be parsed as JSON.
-
-        Returns:
-            dict: Parsed JSON data.
-        """
-        try:
-            return response.json()
-        except ValueError as e:
-            preview = response.text[:100]  # Include first 100 chars for context
-            raise JsonParseError(
-                message="Failed to parse JSON response from IP location service.",
-                http_status=response.status_code,
-                details={"response_preview": preview}
             ) from e
 
     def _parse_coordinates(self, data: dict) -> Coordinates:
