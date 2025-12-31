@@ -11,9 +11,10 @@ from entities.dto.weather_dto import WeatherDTO
 from exceptions.weather_service_exceptions import OpenWeatherServiceError
 from exceptions.infrastructure_exceptions import InfrastructureError, JsonParseError, HttpRequestError
 from exceptions.domain_exceptions import DomainError, InvalidWeatherDataError
+from mixins.http_json_mixin import HttpJsonMixin
 from config.settings import OPENWEATHER_URL_TEMPLATE
 
-class OpenWeatherService:
+class OpenWeatherService(HttpJsonMixin):
     """Service to get weather data from OpenWeather API.
 
     This service provides an interface to query the current weather information
@@ -53,76 +54,14 @@ class OpenWeatherService:
             wind speed, humidity, pressure, visibility, cloudiness, and other weather details.
         """
         try:
-            data = self._make_request()
-            return self._parse_openweather_response(data)
-        except (InfrastructureError, DomainError) as e:
-            raise OpenWeatherServiceError(message="Failed to get weather data from OpenWeather service.") from e
-
-    def _make_request(self) -> dict:
-        """Generates a URL and executes an HTTP GET request.
-
-        This method constructs a URL using the coordinates of the location and performs a GET request 
-        to the OpenWeather API to retrieve the weather information
-
-        Raises:
-            InfrastructureError: If there is an issue with request.
-
-        Returns:
-            dict: The JSON response from the API.
-        """
-        try:
             url = OPENWEATHER_URL_TEMPLATE.format(
                 latitude=self.locator.latitude, 
                 longitude=self.locator.longitude
             )
-            return self._check_response(requests.get(url))
-        except (RequestException, HttpRequestError, JsonParseError) as e:
-            raise InfrastructureError(message="Error during OpenWeather API request.") from e
-
-    def _check_response(self, response: requests.Response) -> dict:
-        """Checks the status code of the response and return JSON if successful.
-
-        Args:
-            response (requests.Response): The HTTP response object from the API request.
-
-        Raises:
-            HttpRequestError: If the response status is not 200.
-
-        Returns:
-            dict: Parsed JSON data.
-        """
-        if response.status_code != 200:
-            raise HttpRequestError(
-                message="Failed to retrieve valid data from the OpenWeather API.",
-                http_status=response.status_code
-            )
-        
-        return self._parse_json(response)
-
-    def _parse_json(self, response: requests.Response) -> dict:
-        """Attempts to parse the API response into a JSON object.
-
-        This method tries to convert the response body from the OpenWeather API into a JSON format.
-
-        Args:
-            response (requests.Response): The HTTP response object from the API request.
-
-        Raises:
-            JsonParseError: If the response cannot be parsed into JSON.
-
-        Returns:
-            dict: The parsed JSON data from the API response.
-        """
-        try:
-            return response.json()
-        except ValueError as e:
-            preview = response.text[:100]  # Get first 100 characters for context
-
-            raise JsonParseError(
-                message="Failed to parse JSON response from OpenWeather API.",
-                http_status=response.status_code,
-                details={"response_preview": preview}
-            ) from e
+            data = self._make_http_request(url)
+            return self._parse_openweather_response(data)
+        except (InfrastructureError, DomainError) as e:
+            raise OpenWeatherServiceError(message="Failed to get weather data from OpenWeather service.") from e
         
     def _parse_openweather_response(self, openweather_dict: dict) -> WeatherDTO:
         """Converts the OpenWeather API into a structured WeatherDTO object.
