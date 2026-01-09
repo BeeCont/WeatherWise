@@ -89,6 +89,31 @@ def test_successful_weather_request(service: OpenWeatherService, base_successful
         result = service.get_weather()
         assert result == expected_weather
 
+@pytest.mark.parametrize("missing_field, expected_attr", [
+    ("visibility", "visibility_km"),
+    ("clouds", "clouds")
+])
+def test_missing_optional_field_is_allowed(
+    service: OpenWeatherService, 
+    base_successful_response: Callable[[str], Any],
+    missing_field, 
+    expected_attr
+    ) -> None:
+    """Parameterized test for handling missing optional fields in API response.
+
+    Verifies that the service processes responses without specified optional fields
+    (e.g., 'visibility', 'clouds') without raising errors, and sets corresponding
+    DTO attributes to None.
+    """
+
+    mock_response = base_successful_response('openweather_success_response.json')
+    del mock_response[missing_field]  # Remove optional fields
+
+    with patch('requests.get', return_value=MagicMock(status_code=200, json=MagicMock(return_value=mock_response))):
+        result = service.get_weather()
+        
+        assert getattr(result, expected_attr) is None  # Check that the attribute is None when the field is missing
+
 def test_unsuccessful_weather_request(service: OpenWeatherService, base_successful_response: Callable[[str], Any]) -> None:
     """Test for handling invalid data with validation error.
 
