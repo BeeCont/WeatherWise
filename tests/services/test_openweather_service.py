@@ -91,7 +91,11 @@ def test_successful_weather_request(service: OpenWeatherService, base_successful
 
 @pytest.mark.parametrize("missing_field, expected_attr", [
     ("visibility", "visibility_km"),
-    ("clouds", "clouds")
+    ("clouds", "clouds"),
+    ("wind", "wind_speed"),
+    ("wind", "wind_dir"),
+    ("sys", "sunrise"),
+    ("sys", "sunset")
 ])
 def test_missing_optional_field_is_allowed(
     service: OpenWeatherService, 
