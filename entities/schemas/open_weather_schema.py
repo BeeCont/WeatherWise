@@ -3,17 +3,17 @@ from typing import List
 
 
 class SysData(BaseModel):
-    sunrise: int = Field(..., ge=0)  # Time must be positive
-    sunset: int = Field(..., ge=0)
+    sunrise: int | None = Field(None, ge=0)  # Time must be positive
+    sunset: int | None = Field(None, ge=0)
 
 
 class CloudData(BaseModel):
-    all: int = Field(..., ge=0, le=100)  # Clouds in % (0-100)
+    all: int | None = Field(None, ge=0, le=100)  # Clouds in % (0-100)
 
 
 class WindData(BaseModel):
-    speed: float = Field(..., ge=0)  # Wind speed must be 0 or more
-    deg: int = Field(..., ge=0, le=360)  # Wind direction (0-360°)
+    speed: float | None = Field(None, ge=0)  # Wind speed must be 0 or more
+    deg: int | None = Field(None, ge=0, le=360)  # Wind direction (0-360°)
 
 
 class MainWeatherData(BaseModel):
@@ -46,8 +46,8 @@ class OpenWeatherSchema(BaseModel):
     """
     main: MainWeatherData
     weather: List[WeatherCondition]
-    wind: WindData
-    visibility: int = Field(..., ge=0)  # Visibility must be 0 or more
-    clouds: CloudData
-    sys: SysData
+    wind: WindData | None = None  # Wind data can be optional
+    visibility: int | None = Field(None, ge=0)  # Visibility must be 0 or more and can be optional
+    clouds: CloudData | None = None  # Clouds data can be optional
+    sys: SysData | None = None  # System data can be optional
     name: str

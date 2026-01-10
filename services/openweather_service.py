@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Literal
 
-import requests
 from requests.exceptions import RequestException
 from pydantic import ValidationError
 
@@ -112,11 +111,20 @@ class OpenWeatherService(HttpJsonMixin):
     def _parse_pressure(self, weather_data: OpenWeatherSchema) -> int:
         return weather_data.main.pressure
     
-    def _parse_wind_speed(self, weather_data: OpenWeatherSchema) -> float:
+    def _parse_wind_speed(self, weather_data: OpenWeatherSchema) -> float | None:
+        """Return wind speed if available, otherwise None."""
+        if weather_data.wind is None or weather_data.wind.speed is None:
+            return None
         return weather_data.wind.speed
     
-    def _parse_wind_dir(self, weather_data: OpenWeatherSchema) -> str:
-        # Converts wind direction from degrees to a copmass direction.
+    def _parse_wind_dir(self, weather_data: OpenWeatherSchema) -> str | None:
+        """Convert wind direction in degrees to a compass direction.
+
+        Returns None if wind or direction is not available.
+        """
+        if weather_data.wind is None or weather_data.wind.deg is None:
+            return None
+        
         deg = weather_data.wind.deg
         directions = [
             'North', 'North-East', 'East', 'South-East',
@@ -124,11 +132,15 @@ class OpenWeatherService(HttpJsonMixin):
         ]
         return directions[(deg // 45) % 8]
     
-    def _parse_visibility(self, weather_data: OpenWeatherSchema) -> float:
+    def _parse_visibility(self, weather_data: OpenWeatherSchema) -> float | None:
+        if weather_data.visibility is None:
+            return None
         # Converts visibility from meters to kilometers.
-        return weather_data.visibility / 1000
-    
-    def _parse_clouds(self, weather_data: OpenWeatherSchema) -> int:
+        return round(weather_data.visibility / 1000, 1)  # Convert meters to kilometers
+
+    def _parse_clouds(self, weather_data: OpenWeatherSchema) -> int | None:
+        if weather_data.clouds is None:
+            return None
         return weather_data.clouds.all
     
     def _parse_humidity(self, weather_data: OpenWeatherSchema) -> int:
@@ -140,8 +152,10 @@ class OpenWeatherService(HttpJsonMixin):
     def _parse_sun_time(
             self,
             weather_data: OpenWeatherSchema,
-            time: Literal['sunrise', 'sunset']) -> datetime:
+            time: Literal['sunrise', 'sunset']) -> datetime | None:
         # Converts sunrise or sunset time from a UNIX timestamp to a datetime object.
+        if weather_data.sys is None:
+            return None
         return datetime.fromtimestamp(getattr(weather_data.sys, time))
 
     def _parse_city(self, weather_data: OpenWeatherSchema) -> str:
