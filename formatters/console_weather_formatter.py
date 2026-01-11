@@ -34,6 +34,11 @@ class ConsoleFormatter:
         welcome_text = Text("Welcome! 😊", justify="center")
         self.console.print(Panel(welcome_text, expand=True, padding=(1, 2)))
 
+    def _format_optional_fields(self, value, metric: str="", placeholder="N/A"):
+        if value is None:
+            return placeholder
+        return f"{value}{metric}"
+
     def print_weather_info(self, weather_data: WeatherDTO):
         self.clear_console()
         self.print_header()
@@ -44,13 +49,13 @@ class ConsoleFormatter:
         temp_min = weather_data.temp_min
         temp_max = weather_data.temp_max
         pressure = weather_data.pressure
-        wind_speed = weather_data.wind_speed
-        wind_dir = weather_data.wind_dir
-        visibility = weather_data.visibility_km
-        clouds = weather_data.clouds
+        wind_speed = self._format_optional_fields(weather_data.wind_speed, " м/с")
+        wind_dir = self._format_optional_fields(weather_data.wind_dir)
+        visibility = self._format_optional_fields(weather_data.visibility_km, " км")
+        clouds = self._format_optional_fields(weather_data.clouds, "%")
         humidity = weather_data.humidity
-        sunrise = weather_data.sunrise
-        sunset = weather_data.sunset
+        sunrise = self._format_optional_fields(weather_data.sunrise)
+        sunset = self._format_optional_fields(weather_data.sunset)
         description = weather_data.description
 
         # Панель для температуры
@@ -63,9 +68,9 @@ class ConsoleFormatter:
 
         # Панель для ветра
         wind_panel = (
-            f"💨  Ветер:            {wind_speed} м/с, {wind_dir}\n"
-            f"🌫️  Видимость:        {visibility} км\n"
-            f"☁️  Облачность:       {clouds}%"
+            f"💨  Ветер:            {wind_speed}, {wind_dir}\n"
+            f"🌫️  Видимость:        {visibility}\n"
+            f"☁️  Облачность:       {clouds}"
         )
 
         # Панель для влажности и давления
